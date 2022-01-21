@@ -25,4 +25,6 @@ abstract contract DonationMinerStorageV2 is IDonationMinerV2 {
     mapping(address => Donor) public override donors;
 
     uint256 public override claimDelay;
+    uint256 public override againstDaysDonations;
+    mapping(address => uint256) public override donorLastClaimRewardPedriod;
 }

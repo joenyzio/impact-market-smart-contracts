@@ -61,6 +61,8 @@ interface IDonationMinerV2 {
         uint256 tokenPrice
     );
     function claimDelay() external view returns (uint256);
+    function againstDaysDonations() external view returns (uint256);
+    function donorLastClaimRewardPedriod(address _donor) external view returns (uint256);
     function updateRewardPeriodParams(
         uint256 _newRewardPeriodSize,
         uint256 _newDecayNumerator,
@@ -68,6 +70,9 @@ interface IDonationMinerV2 {
     ) external;
     function updateClaimDelay(
         uint256 _neClaimDelay
+    ) external;
+    function updateAgainstDaysDonations(
+        uint256 _newAgainstDaysDonations
     ) external;
     function updateTreasury(ITreasury _newTreasury) external;
     function donate(uint256 _amount) external;
