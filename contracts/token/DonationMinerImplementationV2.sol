@@ -391,7 +391,7 @@ contract DonationMinerImplementationV2 is
                     while (
                         _rewardPeriod >
                         (
-                            againstDaysDonations > rewardPeriodCount
+                            rewardPeriodCount > againstDaysDonations
                                 ? rewardPeriodCount - againstDaysDonations
                                 : 0
                         )
@@ -404,7 +404,7 @@ contract DonationMinerImplementationV2 is
                     if (
                         _rewardPeriod ==
                         (
-                            againstDaysDonations > rewardPeriodCount
+                            rewardPeriodCount > againstDaysDonations
                                 ? rewardPeriodCount - againstDaysDonations - 1
                                 : 0
                         )
