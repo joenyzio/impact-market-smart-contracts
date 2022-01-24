@@ -183,12 +183,12 @@ contract DonationMinerImplementationV2 is
         emit ClaimDelayUpdated(_oldClaimDelay, _newClaimDelay);
     }
 
-    function updateAgainstDaysDonations(uint256 _newAgainstDaysDonations)
+    function updateAgainstPeriodsDonations(uint256 _newAgainstPeriodsDonations)
         external
         override
         onlyOwner
     {
-        againstDaysDonations = _newAgainstDaysDonations;
+        againstPeriodsDonations = _newAgainstPeriodsDonations;
     }
 
     /**
@@ -257,7 +257,7 @@ contract DonationMinerImplementationV2 is
         (
             _claimAmount,
             _donor.lastClaim,
-            donorLastClaimRewardPedriod[msg.sender]
+            donorLastClaimRewardPeriod[msg.sender]
         ) = _calculateRewardAndIndexByPeriodNumber(msg.sender, lastPeriodToClaim);
 
         if (_claimAmount == 0) {
@@ -384,15 +384,15 @@ contract DonationMinerImplementationV2 is
             _newPeriod.rewardPerBlock = calculateRewardPerBlock();
             uint256 _rewardAmount = rewardPeriodSize * _newPeriod.rewardPerBlock;
             if (_lastPeriod.donationsAmount == 0) {
-                if (againstDaysDonations == 0) {
+                if (againstPeriodsDonations == 0) {
                     _rewardAmount += _lastPeriod.rewardAmount;
                 } else {
                     uint256 _rewardPeriod = rewardPeriodCount - 1;
                     while (
                         _rewardPeriod >
                         (
-                            rewardPeriodCount > againstDaysDonations
-                                ? rewardPeriodCount - againstDaysDonations
+                            rewardPeriodCount > againstPeriodsDonations
+                                ? rewardPeriodCount - againstPeriodsDonations
                                 : 0
                         )
                     ) {
@@ -404,8 +404,8 @@ contract DonationMinerImplementationV2 is
                     if (
                         _rewardPeriod ==
                         (
-                            rewardPeriodCount > againstDaysDonations
-                                ? rewardPeriodCount - againstDaysDonations - 1
+                            rewardPeriodCount > againstPeriodsDonations
+                                ? rewardPeriodCount - againstPeriodsDonations - 1
                                 : 0
                         )
                     ) {
@@ -511,7 +511,7 @@ contract DonationMinerImplementationV2 is
     {
         uint256 donationsAmounts = 0;
         uint256 donorAmounts = 0;
-        for (uint256 i = 0; i <= againstDaysDonations; i++) {
+        for (uint256 i = 0; i <= againstPeriodsDonations; i++) {
             if (_rewardPeriodNumber - i == 0) {
                 break;
             }
@@ -547,12 +547,12 @@ contract DonationMinerImplementationV2 is
         uint256 _claimAmount;
         RewardPeriod storage _rewardPeriod;
         uint256 _index = _donor.lastClaim + 1;
-        uint256 _lowerLimit = donorLastClaimRewardPedriod[_donorAddress];
+        uint256 _lowerLimit = donorLastClaimRewardPeriod[_donorAddress];
         if (
             _index > _donor.rewardPeriodsCount &&
-            donorLastClaimRewardPedriod[_donorAddress] -
+            donorLastClaimRewardPeriod[_donorAddress] -
                 _donor.rewardPeriods[_donor.rewardPeriodsCount] <=
-            againstDaysDonations
+            againstPeriodsDonations
         ) {
             _index--;
         }
@@ -569,9 +569,9 @@ contract DonationMinerImplementationV2 is
                 uint256 _rewardPeriodCount = rewardPeriodCount +
                     (rewardPeriods[rewardPeriodCount].endBlock < block.number ? 1 : 0);
                 uint256 _rewardCalc = (
-                    _donor.rewardPeriods[_index] + againstDaysDonations >= _rewardPeriodCount
+                    _donor.rewardPeriods[_index] + againstPeriodsDonations >= _rewardPeriodCount
                         ? _rewardPeriodCount - 1
-                        : _donor.rewardPeriods[_index] + againstDaysDonations
+                        : _donor.rewardPeriods[_index] + againstPeriodsDonations
                 ) + 1;
 
                 for (
@@ -579,7 +579,7 @@ contract DonationMinerImplementationV2 is
                     _rewardCalc >
                     (
                         claimDelay != 0 &&
-                            againstDaysDonations == 0 &&
+                            againstPeriodsDonations == 0 &&
                             _donor.lastClaim < _donor.rewardPeriodsCount
                             ? _donor.rewardPeriods[_index]
                             : _lowerLimit
@@ -600,16 +600,16 @@ contract DonationMinerImplementationV2 is
                 }
                 _lowerLimit =
                     (
-                        _donor.rewardPeriods[_index] + againstDaysDonations >= _rewardPeriodCount
+                        _donor.rewardPeriods[_index] + againstPeriodsDonations >= _rewardPeriodCount
                             ? _rewardPeriodCount - 1
-                            : _donor.rewardPeriods[_index] + againstDaysDonations
+                            : _donor.rewardPeriods[_index] + againstPeriodsDonations
                     ) +
                     1;
             }
             _index++;
         }
         if (_claimAmount == 0) {
-            return (0, _index - 1, donorLastClaimRewardPedriod[_donorAddress]);
+            return (0, _index - 1, donorLastClaimRewardPeriod[_donorAddress]);
         }
 
         return (_claimAmount, _index - 1, rewardPeriodCount);
