@@ -6,13 +6,11 @@ import chaiAsPromised from "chai-as-promised";
 import { deployments, ethers, getNamedAccounts } from "hardhat";
 import {
 	advanceBlockNTimes,
-	advanceTimeAndBlockNTimes,
 	advanceToBlockN,
 } from "../utils/TimeTravel";
 import { parseEther, formatEther } from "@ethersproject/units";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import * as ethersTypes from "ethers";
-import { BigNumber } from "@ethersproject/bignumber";
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -56,11 +54,18 @@ const deploy = deployments.createFixture(async () => {
 		).address
 	);
 
+	const impactLabsVestingAddress = (
+		await deployments.get("ImpactLabsVestingProxy")
+	).address;
+
+	await ImpactProxyAdmin.upgrade(
+		impactLabsVestingAddress,
+		(await deployments.get("ImpactLabsVestingImplementationV2")).address
+	);
+
 	ImpactLabsVesting = await ethers.getContractAt(
-		"ImpactLabsVestingImplementation",
-		(
-			await deployments.get("ImpactLabsVestingProxy")
-		).address
+		"ImpactLabsVestingImplementationV2",
+		impactLabsVestingAddress
 	);
 
 	cUSD = await ethers.getContractAt(
@@ -71,9 +76,10 @@ const deploy = deployments.createFixture(async () => {
 	);
 
 	await cUSD.mint(donor1.address, parseEther("1000000"));
-});
+	await cUSD.mint(impactLabsVestingAddress, parseEther("1000000"));
+})
 
-describe("Impact Labs Vesting", () => {
+describe.only("Impact Labs Vesting", () => {
 	before(async function () {});
 
 	beforeEach(async () => {
@@ -229,5 +235,36 @@ describe("Impact Labs Vesting", () => {
 		expect(await PACT.balanceOf(ImpactLabsVesting.address)).to.be.equal(
 			parseEther(donationMinerBalanceAfterYears)
 		);
+	});
+
+	it("Should not transfer PACTs with emergency transfer method", async function () {
+		await expect(ImpactLabsVesting.transfer(PACT.address, owner.address, parseEther("10"))).to.be.rejectedWith('ImpactLabsVesting::transfer: PACTs cannot be transferred in this way');
+	});
+
+	it("Should transfer cUSD with emergency transfer method", async function () {
+		await expect(ImpactLabsVesting.transfer(cUSD.address, owner.address, parseEther("10"))).to.be.fulfilled;
+	});
+
+	it("Should pause the contract", async function () {
+		await advanceBlockNTimes(STARTING_DELAY);
+		await advanceBlockNTimes(10 * REWARD_PERIOD_SIZE);
+		await expect(ImpactLabsVesting.pause()).to.be.fulfilled;
+		await expect(ImpactLabsVesting.claim()).to.be.rejectedWith("Pausable: paused");
+	});
+
+	it("Should unpause the contract", async function () {
+		await advanceBlockNTimes(STARTING_DELAY);
+		await advanceBlockNTimes(10 * REWARD_PERIOD_SIZE);
+		await expect(ImpactLabsVesting.pause()).to.be.fulfilled;
+		await expect(ImpactLabsVesting.claim()).to.be.rejectedWith("Pausable: paused");
+		await expect(ImpactLabsVesting.unpause()).to.be.fulfilled;
+		await expect(ImpactLabsVesting.claim()).to.be.fulfilled;
+	});
+
+	it.only("Should unpause the contract", async function () {
+		await advanceBlockNTimes(STARTING_DELAY);
+		await advanceBlockNTimes(10 * REWARD_PERIOD_SIZE);
+		await expect(ImpactLabsVesting.claim()).to.be.fulfilled;
+		await expect(ImpactLabsVesting.claim()).to.be.fulfilled;
 	});
 });
