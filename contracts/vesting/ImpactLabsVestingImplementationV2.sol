@@ -11,11 +11,11 @@ import "./interfaces/ImpactLabsVestingStorageV2.sol";
 import "hardhat/console.sol";
 
 contract ImpactLabsVestingImplementationV2 is
-Initializable,
-OwnableUpgradeable,
-PausableUpgradeable,
-ReentrancyGuardUpgradeable,
-ImpactLabsVestingStorageV2
+    Initializable,
+    OwnableUpgradeable,
+    PausableUpgradeable,
+    ReentrancyGuardUpgradeable,
+    ImpactLabsVestingStorageV2
 {
     using SafeERC20 for IERC20;
 
@@ -154,7 +154,10 @@ ImpactLabsVestingStorageV2
         address _to,
         uint256 _amount
     ) external override onlyOwner nonReentrant {
-        require(address(_token) != address(PACT), "ImpactLabsVesting::transfer: PACTs cannot be transferred in this way");
+        require(
+            address(_token) != address(PACT),
+            "ImpactLabsVesting::transfer: PACTs cannot be transferred in this way"
+        );
 
         _token.safeTransfer(_to, _amount);
 
@@ -174,7 +177,6 @@ ImpactLabsVestingStorageV2
     function unpause() external override onlyOwner {
         PausableUpgradeable._unpause();
     }
-
 
     /**
      * @notice Transfers an amount of PACTs from this contract to impactLabs address
